@@ -253,7 +253,7 @@ rpm_arch = $(rpm_$(GOARCH)$(GOARM))
 $(rpms):
 	@$(MAKE) install
 	@mkdir -p $(pkgdir)
-	fpm --force \
+	/usr/local/Homebrew/Library/Homebrew/vendor/portable-ruby/2.6.3_2/bin/fpm --force \
 		--log info \
 		--architecture $(rpm_arch) \
 		--input-type dir \
@@ -291,7 +291,7 @@ deb_arch = $(deb_$(GOARCH)$(GOARM))
 $(debs):
 	@$(MAKE) install
 	@mkdir -pv $(pkgdir)
-	fpm --force \
+	/usr/local/Homebrew/Library/Homebrew/vendor/portable-ruby/2.6.3_2/bin/fpm --force \
 		--log info \
 		--architecture $(deb_arch) \
 		--input-type dir \
