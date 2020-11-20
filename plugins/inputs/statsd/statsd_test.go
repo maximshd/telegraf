@@ -11,6 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/influxdata/telegraf"
+	"github.com/influxdata/telegraf/internal"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/influxdata/telegraf/testutil"
 )
 
@@ -29,6 +34,7 @@ func NewTestStatsd() *Statsd {
 	s.counters = make(map[string]cachedcounter)
 	s.sets = make(map[string]cachedset)
 	s.timings = make(map[string]cachedtimings)
+	s.distributions = []cacheddistributions{}
 
 	s.MetricSeparator = "_"
 
@@ -457,6 +463,44 @@ func TestParse_Timings(t *testing.T) {
 	}
 
 	acc.AssertContainsFields(t, "test_timing", valid)
+}
+
+// Tests low-level functionality of distributions
+func TestParse_Distributions(t *testing.T) {
+	s := NewTestStatsd()
+	acc := &testutil.Accumulator{}
+
+	// Test that distributions work
+	validLines := []string{
+		"test.distribution:1|d",
+		"test.distribution2:2|d",
+		"test.distribution3:3|d",
+		"test.distribution4:1|d",
+		"test.distribution5:1|d",
+	}
+
+	for _, line := range validLines {
+		err := s.parseStatsdLine(line)
+		if err != nil {
+			t.Errorf("Parsing line %s should not have resulted in an error\n", line)
+		}
+	}
+
+	s.Gather(acc)
+
+	validMeasurementMap := map[string]float64{
+		"test_distribution":  1,
+		"test_distribution2": 2,
+		"test_distribution3": 3,
+		"test_distribution4": 1,
+		"test_distribution5": 1,
+	}
+	for key, value := range validMeasurementMap {
+		valid := map[string]interface{}{
+			"value": float64(value),
+		}
+		acc.AssertContainsFields(t, key, valid)
+	}
 }
 
 func TestParseScientificNotation(t *testing.T) {
